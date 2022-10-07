@@ -80,7 +80,8 @@ _start:
   je .done
 
   ; clear line by filling it with spaces, the '|' char and a newline at the end
-  xor rbx,rbx   ; zero out the counter
+  xor rbx,rbx   ; zero out the hex index
+  mov rbp,60    ; index for printable chars
   movdqa xmm0,[space_pattern]
   movdqa [line],xmm0
   movdqa [line+16],xmm0
@@ -95,7 +96,7 @@ _start:
   mov al,[r14+r15]  ; get byte from file
 
   mov rcx,rax       ; store byte in rcx
-  mov rbp,rax;      ; store byte in rbp
+  mov r10,rax;      ; store byte in r10
 
   shr al,4                ; get high nibble
   mov al,[hex_table+rax]  ; convert high nibble to hex char
@@ -105,15 +106,10 @@ _start:
   mov cl,[hex_table+rcx]  ; convert low nibble to hex char
   mov [line+rbx+1],cl     ; add hex char to line
 
-  mov bpl,[printable_table+rbp] ; get printable char corresponding to byte
-  xor rdx,rdx                   ; zero out rdx for division
-  mov rax,rbx                   ; place position in rax for division
-  mov rdi,3                     ; place divisor in rdi for division
-  div rdi                       ; divide
-  mov ecx,60                    ; printable chars start at position 60
-  add ecx,eax                   ; add index to compute the position
-  mov [line+ecx],bpl            ; add printable char to the line
+  mov r10b,[printable_table+r10]  ; get printable char corresponding to byte
+  mov [line+rbp],r10b             ; add printable char to the line
 
+  inc rbp         ; added 1 printable char
   add rbx,3       ; added 2 hex characters + space
   cmp rbx,60      ; check if filled the line already
   jne .end_loop
@@ -128,7 +124,8 @@ _start:
   jne .print_write_err
 
   ; clear line by filling it with spaces, the '|' char and a newline at the end
-  xor rbx,rbx   ; zero out the counter
+  xor rbx,rbx   ; zero out the hex index
+  mov rbp,60    ; reset the printable char index
   movdqa xmm0,[space_pattern]
   movdqa [line],xmm0
   movdqa [line+16],xmm0
